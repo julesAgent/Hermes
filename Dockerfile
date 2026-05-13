@@ -41,7 +41,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONIOENCODING=utf-8
 
 WORKDIR /apptoo
-RUN git clone --depth 1 --shallow-submodules --recurse-submodules https://github.com/nesquena/hermes-webui.git -b main /apptoo
+RUN git clone --depth 1 --shallow-submodules --recurse-submodules https://github.com/nesquena/hermes-webui.git -b master /apptoo
 # Create the unprivileged runtime user. The entrypoint starts as root only for
 # UID/GID alignment and filesystem preparation, then execs the server as this user.
 RUN groupadd -g 1024 hermeswebui \
