@@ -22,4 +22,4 @@ ENV HERMES_HOME=/home/hermeswebui/.hermes \
 
 EXPOSE 8787
 
-CMD ["/apptoo/docker_init.bash"]
+CMD ["/hermeswebui_init.bash"]
