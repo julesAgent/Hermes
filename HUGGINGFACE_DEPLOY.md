@@ -1,54 +1,56 @@
-# Deployment Guide: Hermes WebUI on Hugging Face Spaces
+# Deployment Guide: Hermes WebUI on Hugging Face Spaces (via GHCR)
 
-This guide explains how to deploy Hermes WebUI to Hugging Face Spaces with persistent storage using a Hugging Face Dataset.
+This guide explains how to deploy Hermes WebUI to Hugging Face Spaces using the image built and pushed to GitHub Container Registry (GHCR).
 
-## Prerequisites
+## Overview
 
-1.  A [Hugging Face account](https://huggingface.co/join).
-2.  A [User Access Token](https://huggingface.co/settings/tokens) with `write` permissions.
+1.  **GitHub Action:** Automatically builds a Docker image from the `Dockerfile` in your repo and pushes it to `ghcr.io/your-username/your-repo`.
+2.  **Hugging Face Space:** Uses `Dockerfile.hf`, which pulls the image from GHCR and adds persistence logic.
 
-## Step 1: Create a Dataset for Persistence
+## Step 1: Push to GitHub
 
-The application saves sessions and configurations to a Dataset.
+Push your code to GitHub. The GitHub Action will trigger and build your image. Check the **Actions** tab in your GitHub repository to ensure the build completes successfully.
+
+## Step 2: Create a Dataset for Persistence
 
 1.  Go to [huggingface.co/new-dataset](https://huggingface.co/new-dataset).
 2.  Name it (e.g., `hermes-webui-data`).
-3.  Set it to **Private** (recommended, as it will store your session history).
+3.  Set it to **Private**.
 4.  Note the Repository ID (e.g., `username/hermes-webui-data`).
 
-## Step 2: Create the Space
+## Step 3: Configure Dockerfile.hf
+
+Open `Dockerfile.hf` and update the first line:
+
+```dockerfile
+FROM ghcr.io/your-username/hermes-webui:latest
+```
+
+Replace `your-username/hermes-webui` with your actual GHCR repository path.
+
+## Step 4: Create the Space
 
 1.  Go to [huggingface.co/new-space](https://huggingface.co/new-space).
 2.  Name it (e.g., `hermes-webui`).
 3.  Select **Docker** as the SDK.
 4.  Choose the **Blank** template or **Dockerfile**.
-5.  Set the Space to **Public** or **Private**.
 
-## Step 3: Configure Secrets
+## Step 5: Configure Secrets
 
 In your Space settings:
 
 1.  Go to **Settings** > **Variables and secrets**.
 2.  Add a New Secret:
     *   **Name:** `HF_TOKEN`
-    *   **Value:** Your Hugging Face User Access Token (with write permission).
+    *   **Value:** Your HF User Access Token (with `write` permission).
 3.  Add a New Secret:
     *   **Name:** `REPO_ID`
-    *   **Value:** the Repository ID of the dataset you created in Step 1 (e.g., `username/hermes-webui-data`).
+    *   **Value:** Your dataset ID (from Step 2).
 
-## Step 4: Upload Files
+## Step 6: Upload Files to Space
 
-Upload the following files to your Space repository:
-
-1.  `Dockerfile.hf` (Rename it to `Dockerfile` if uploading via the web interface).
-2.  `run_hf.sh`.
+Upload `Dockerfile.hf` (rename it to `Dockerfile`) and `run_hf.sh` to your Hugging Face Space repository.
 
 ## Persistence Details
 
-The application uses the `huggingface_hub` library's `CommitScheduler` to sync the `/app/data` directory to your dataset every 5 minutes. This includes:
-
-*   **Sessions:** Your chat history.
-*   **Settings:** UI preferences and configurations.
-*   **Workspaces:** Any files created in the default workspace.
-
-When the Space restarts, it automatically downloads the latest files from your Dataset.
+The `run_hf.sh` script uses `huggingface_hub` to sync the `/app/data` directory with your dataset every 5 minutes. This ensures your sessions and settings are saved.

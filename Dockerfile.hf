@@ -1,47 +1,33 @@
-FROM python:3.12-slim
+# Use the image built by GitHub Actions and pushed to GHCR
+# IMPORTANT: Update this line with your actual GHCR image path
+FROM ghcr.io/your-username/hermes-webui:latest
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PYTHONIOENCODING=utf-8 \
-    HOME=/home/user \
-    PATH=/home/user/.local/bin:$PATH
+# Switch to root to perform setup
+USER root
 
-# Install system packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    git \
-    rsync \
-    sqlite3 \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+# Install persistence dependencies
+RUN pip install --no-cache-dir huggingface_hub
 
-# Create a non-root user (Hugging Face Spaces expects UID 1000)
-RUN useradd -m -u 1000 user
-WORKDIR /app
+# Hugging Face Spaces expects UID 1000
+# The base image uses UID 1024 for hermeswebui. We will adjust it to 1000.
+RUN usermod -u 1000 hermeswebui \
+    && groupmod -g 1000 hermeswebui \
+    && chown -R hermeswebui:hermeswebui /home/hermeswebui /app /uv_cache /apptoo
 
-# Clone the repository
-# We clone it to a temporary location first to avoid overwriting files we might want to keep
-RUN git clone https://github.com/nesquena/hermes-webui.git /app/repo \
-    && cp -r /app/repo/* /app/ \
-    && rm -rf /app/repo \
-    && chown -R user:user /app
+# Create data directory for persistence
+RUN mkdir -p /app/data && chown -R hermeswebui:hermeswebui /app/data
 
-# Install Python dependencies
-RUN pip install --no-cache-dir pyyaml huggingface_hub
-
-# Create data directory for persistence and set permissions
-RUN mkdir -p /app/data && chown -R user:user /app/data
-
-# Switch to non-root user
-USER user
-
-# Copy the startup script
-COPY --chown=user:user run_hf.sh /app/run_hf.sh
+# Copy the Hugging Face specific startup script
+COPY --chown=hermeswebui:hermeswebui run_hf.sh /app/run_hf.sh
 RUN chmod +x /app/run_hf.sh
 
-# Expose the port (HF Space uses 7860 by default)
+# Set environment variables for Hugging Face
+ENV PORT=7860
+ENV HERMES_WEBUI_PORT=7860
 EXPOSE 7860
+
+# Switch to the non-root user
+USER hermeswebui
 
 # Set entrypoint to our persistence-enabled script
 CMD ["/app/run_hf.sh"]
