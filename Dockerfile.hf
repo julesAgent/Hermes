@@ -1,0 +1,47 @@
+FROM python:3.12-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONIOENCODING=utf-8 \
+    HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH
+
+# Install system packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    git \
+    rsync \
+    sqlite3 \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user (Hugging Face Spaces expects UID 1000)
+RUN useradd -m -u 1000 user
+WORKDIR /app
+
+# Clone the repository
+# We clone it to a temporary location first to avoid overwriting files we might want to keep
+RUN git clone https://github.com/nesquena/hermes-webui.git /app/repo \
+    && cp -r /app/repo/* /app/ \
+    && rm -rf /app/repo \
+    && chown -R user:user /app
+
+# Install Python dependencies
+RUN pip install --no-cache-dir pyyaml huggingface_hub
+
+# Create data directory for persistence and set permissions
+RUN mkdir -p /app/data && chown -R user:user /app/data
+
+# Switch to non-root user
+USER user
+
+# Copy the startup script
+COPY --chown=user:user run_hf.sh /app/run_hf.sh
+RUN chmod +x /app/run_hf.sh
+
+# Expose the port (HF Space uses 7860 by default)
+EXPOSE 7860
+
+# Set entrypoint to our persistence-enabled script
+CMD ["/app/run_hf.sh"]
