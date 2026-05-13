@@ -19,9 +19,22 @@ export BUCKET_URL="${BUCKET_URL:-}"
 
 echo "[$(date +'%T')] --- Hermes WebUI / Hugging Face Persistence (Buckets) ---"
 
+mkdir -p "${HERMES_HOME:-/home/hermeswebui/.hermes}" \
+  "${HERMES_WEBUI_STATE_DIR:-/home/hermeswebui/.hermes/webui-mvp}" \
+  "${HERMES_WEBUI_DEFAULT_WORKSPACE:-/workspace}"
+
+chown -R hermeswebui:hermeswebui \
+  /data/.hermes \
+  "${HERMES_HOME:-/home/hermeswebui/.hermes}" \
+  "${HERMES_WEBUI_STATE_DIR:-/home/hermeswebui/.hermes/webui-mvp}" \
+  "${HERMES_WEBUI_DEFAULT_WORKSPACE:-/workspace}" \
+  /opt/hermes || true
+
+chown -h hermeswebui:hermeswebui /home/hermeswebui/.hermes || true
+
 # 1. HF Token & Bucket Check
 if [[ -z "${HF_TOKEN:-}" ]]; then
-    echo "[WARNING] HF_TOKEN is missing. Persistence will be disabled."
+    echo "[WARNING] HF_TOKEN is missing. Using built-in settings for Hugging Face Persistence (Buckets)."
 else
     if [[ -z "$BUCKET_URL" ]]; then
         echo "[WARNING] BUCKET_URL is missing. Persistence will be disabled."
