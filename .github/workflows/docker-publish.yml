@@ -23,10 +23,6 @@ jobs:
   docker:
     name: Build and Push Docker
     runs-on: ubuntu-latest
-    env:
-      # GHCR_REPO is derived from the repository path.
-      # No need to define this in GitHub Secrets or Environment.
-      GHCR_REPO: ghcr.io/${{ github.repository }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,41 +37,41 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          # GITHUB_TOKEN is automatically provided by GitHub Actions for each run.
-          # No need to manually create this secret.
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract version
-        id: version
+      - name: Prepare metadata
+        id: meta
         run: |
+          # Lowercase the repository name to comply with Docker registry standards
+          GHCR_REPO="ghcr.io/${{ github.repository }}"
+          echo "ghcr_repo=${GHCR_REPO,,}" >> "$GITHUB_OUTPUT"
+          
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             VERSION="${{ inputs.version }}"
           else
             VERSION="${GITHUB_REF_NAME}"
-            # Remove 'v' prefix if it exists
             VERSION="${VERSION#v}"
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Building version: $VERSION"
+          echo "Building version $VERSION for repo ${GHCR_REPO,,}"
 
       - name: Build and push image
         uses: docker/build-push-action@v5
         with:
           context: .
-          # This uses the root Dockerfile to build the base image
           file: ./Dockerfile
           platforms: linux/amd64
           push: ${{ github.event_name != 'pull_request' }}
           build-args: |
-            HERMES_VERSION=${{ steps.version.outputs.version }}
+            HERMES_VERSION=${{ steps.meta.outputs.version }}
           tags: |
-            ${{ env.GHCR_REPO }}:${{ steps.version.outputs.version }}
-            ${{ env.GHCR_REPO }}:latest
+            ${{ steps.meta.outputs.ghcr_repo }}:${{ steps.meta.outputs.version }}
+            ${{ steps.meta.outputs.ghcr_repo }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Inspect image
         if: github.event_name != 'pull_request'
         run: |
-          docker buildx imagetools inspect "${{ env.GHCR_REPO }}:${{ steps.version.outputs.version }}"
+          docker buildx imagetools inspect "${{ steps.meta.outputs.ghcr_repo }}:${{ steps.meta.outputs.version }}"
