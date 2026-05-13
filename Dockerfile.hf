@@ -1,39 +1,11 @@
-# Use the image built by GitHub Actions and pushed to GHCR
-# IMPORTANT: Update this line with your actual GHCR image path
-FROM ghcr.io/your-username/hermes-webui:latest
+FROM ghcr.io/julesagent/hermes:latest
 
-# Switch to root to perform setup
 USER root
 
-# Hugging Face Spaces expects UID 1000.
-# We adjust the existing hermeswebui user to match.
-RUN usermod -u 1000 hermeswebui \
-    && groupmod -g 1000 hermeswebui \
-    && chown -R hermeswebui:hermeswebui /home/hermeswebui /app /uv_cache /apptoo
-
-# Ensure hf tool is installed (it's in the base image, but we ensure it here for UID 1000 context)
 RUN su hermeswebui -c "uv tool install hf" || true
 
-# Create data directory for persistence
-RUN mkdir -p /app/data/hermes && chown -R hermeswebui:hermeswebui /app/data
-
-# Copy .env file if it exists
-COPY --chown=hermeswebui:hermeswebui .env* /app/data/hermes/
-
-# Copy the Hugging Face specific startup script
-COPY --chown=hermeswebui:hermeswebui run_hf.sh /app/run_hf.sh
-RUN chmod +x /app/run_hf.sh
-
-# Set environment variables for Hugging Face
-ENV PORT=7860
-ENV HERMES_WEBUI_PORT=7860
-# Ensure ~/.local/bin is in PATH for the hf tool
-ENV PATH="/home/hermeswebui/.local/bin:$PATH"
-
-EXPOSE 7860
-
-# Switch to the non-root user
-USER hermeswebui
+COPY --chown=hermeswebui:hermeswebui run_hf.sh /run_hf.sh
+RUN chmod +x /run_hf.sh
 
 # Set entrypoint to our persistence-enabled script
-CMD ["/app/run_hf.sh"]
+CMD ["/run_hf.sh"]
