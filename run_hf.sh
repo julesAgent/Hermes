@@ -4,17 +4,14 @@
 set -euo pipefail
 
 # ======================= Configuration =======================
-# Hugging Face Space uses UID 1000 and usually expects app on port 7860
-export PORT="${PORT:-7860}"
+# Hugging Face Space uses UID 1000 and usually expects app on port 8787
+export PORT="${PORT:-8787}"
 export HERMES_WEBUI_HOST="0.0.0.0"
 export HERMES_WEBUI_PORT="$PORT"
+export HERMES_WEBUI_PASSWORD="${HERMES_WEBUI_PASSWORD:-}"
 
 # Persistence Configuration
-export DATA_DIR="/app/data"
-export HERMES_HOME="$DATA_DIR/hermes"
-export HERMES_WEBUI_STATE_DIR="$HERMES_HOME/webui"
-export HERMES_WEBUI_DEFAULT_WORKSPACE="$DATA_DIR/workspace"
-export HF_HOME="/tmp/.cache/huggingface"
+export DATA_DIR="/data/.hermes"
 
 # Hugging Face Bucket URL
 # Example: hf://buckets/username/bucket-name
@@ -22,10 +19,7 @@ export BUCKET_URL="${BUCKET_URL:-}"
 
 echo "[$(date +'%T')] --- Hermes WebUI / Hugging Face Persistence (Buckets) ---"
 
-# 1. Directory Setup
-mkdir -p "$HERMES_HOME" "$HERMES_WEBUI_STATE_DIR" "$HERMES_WEBUI_DEFAULT_WORKSPACE" "$HF_HOME"
-
-# 2. HF Token & Bucket Check
+# 1. HF Token & Bucket Check
 if [[ -z "${HF_TOKEN:-}" ]]; then
     echo "[WARNING] HF_TOKEN is missing. Persistence will be disabled."
 else
@@ -50,5 +44,5 @@ fi
 
 # 4. Start Application
 echo "[System] Starting Hermes WebUI on port $PORT..."
-cd /app
-exec python3 server.py
+
+exec /hermeswebui_init.bash
