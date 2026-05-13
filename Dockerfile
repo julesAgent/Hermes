@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM nousresearch/hermes-agent:latest
 
 LABEL maintainer="nesquena"
 LABEL description="Hermes Web UI — browser interface for Hermes Agent"
