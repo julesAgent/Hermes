@@ -47,7 +47,7 @@ RUN git clone --depth 1 --shallow-submodules --recurse-submodules https://github
 RUN groupadd -g 1024 hermes || true \
     && useradd -u 1024 -d /home/hermes -g hermes -G users -s /bin/bash -m hermes || true
 
-# Dizin oluşturma ve yetkilendirme
+RUN mkdir -p /app /uv_cache /home/hermes
 RUN mkdir -p /app /uv_cache && chown -R hermes:hermes /home/hermes /app /uv_cache
 
 RUN chmod -R 555 /apptoo/docker_init.bash
