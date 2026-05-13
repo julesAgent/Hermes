@@ -25,7 +25,8 @@ ENV LC_ALL=C
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONIOENCODING=utf-8
+    PYTHONIOENCODING=utf-8 \
+    PATH="/home/hermeswebui/.local/bin:$PATH"
 
 WORKDIR /apptoo
 
@@ -35,13 +36,11 @@ RUN groupadd -g 1024 hermeswebui \
     && mkdir -p /app /uv_cache \
     && chown -R hermeswebui:hermeswebui /home/hermeswebui /app /uv_cache
 
-# Pre-install uv
-RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
+# Pre-install uv and hf tool
+RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh \
+    && su hermeswebui -c "/usr/local/bin/uv tool install hf"
 
 # Clone or Copy source code
-# Since this Dockerfile is in the root of the user's repo, we copy the hermes-webui folder if it exists
-# Or we clone it. The user instructed to clone it in the beginning.
-# To make it standalone, let's clone it.
 RUN git clone https://github.com/nesquena/hermes-webui.git /apptoo
 
 # Copy initialization script

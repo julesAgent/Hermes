@@ -9,13 +9,16 @@ USER root
 RUN pip install --no-cache-dir huggingface_hub
 
 # Hugging Face Spaces expects UID 1000
-# The base image uses UID 1024 for hermeswebui. We will adjust it to 1000.
 RUN usermod -u 1000 hermeswebui \
     && groupmod -g 1000 hermeswebui \
     && chown -R hermeswebui:hermeswebui /home/hermeswebui /app /uv_cache /apptoo
 
 # Create data directory for persistence
-RUN mkdir -p /app/data && chown -R hermeswebui:hermeswebui /app/data
+RUN mkdir -p /app/data/hermes && chown -R hermeswebui:hermeswebui /app/data
+
+# Copy .env file if it exists (usually provided as a secret, but this allows for local builds)
+# We use a wildcard to avoid error if file doesn't exist during standard build
+COPY --chown=hermeswebui:hermeswebui .env* /app/data/hermes/
 
 # Copy the Hugging Face specific startup script
 COPY --chown=hermeswebui:hermeswebui run_hf.sh /app/run_hf.sh
