@@ -44,10 +44,10 @@ WORKDIR /apptoo
 RUN git clone --depth 1 --shallow-submodules --recurse-submodules https://github.com/nesquena/hermes-webui.git -b master /apptoo
 # Create the unprivileged runtime user. The entrypoint starts as root only for
 # UID/GID alignment and filesystem preparation, then execs the server as this user.
-RUN groupadd -g 1024 hermeswebui \
-    && useradd -u 1024 -d /home/hermeswebui -g hermeswebui -G users -s /bin/bash -m hermeswebui \
+RUN groupadd -g 1024 hermes \
+    && useradd -u 1024 -d /home/hermes -g hermes -G users -s /bin/bash -m hermes \
     && mkdir -p /app /uv_cache \
-    && chown -R hermeswebui:hermeswebui /home/hermeswebui /app /uv_cache
+    && chown -R hermes:hermes /home/hermes /app /uv_cache
 
 RUN chmod -R 555 /apptoo/docker_init.bash
 
@@ -76,7 +76,7 @@ ENV WANTED_UID=1000
 ENV WANTED_GID=1000
 ENV HERMES_WEBUI_HOST=0.0.0.0
 ENV HERMES_WEBUI_PORT=8787
-ENV HERMES_WEBUI_STATE_DIR=/home/hermeswebui/.hermes/webui
+ENV HERMES_WEBUI_STATE_DIR=/home/hermes/.hermes/webui
 ENV HERMES_WEBUI_PASSWORD=changeme
 
 EXPOSE 8787
