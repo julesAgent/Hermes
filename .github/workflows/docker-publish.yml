@@ -21,7 +21,7 @@ permissions:
 
 jobs:
   docker:
-    name: Build and Push Docker (multi-arch)
+    name: Build and Push Docker
     runs-on: ubuntu-latest
     env:
       GHCR_REPO: ghcr.io/${{ github.repository }}
@@ -30,9 +30,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/v{0}', inputs.version) || '' }}
-
-      - name: Set up QEMU (for multi-arch builds)
-        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -58,7 +55,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Building version: $VERSION"
 
-      - name: Build and push multi-arch image
+      - name: Build and push image
         uses: docker/build-push-action@v5
         with:
           context: .
